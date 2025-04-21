@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Username Entry & Webtoon Gallery</title>
+    <link rel="stylesheet" href="style.css">
+    <script type="module" src="firebase.js"></script>
+</head>
+<body>
+    <div id="entryPage" class="container">
+        <h1>Enter Username</h1>
+        <input type="text" id="username" placeholder="Username" required>
+        <p id="usernameError" style="color: red; display: none;">Please enter a username.</p>
+        <button onclick="goToGallery()">Next</button>
+    </div>
+
+    <div id="galleryPage" class="gallery-container" style="display:none;">
+        <h1>Welcome to Webtoon Gallery</h1>
+        <h2 id="greeting"></h2>
+        <p>I am Koko, your assistant</p>
+        <img id="userImage" src="https://i.pinimg.com/736x/b9/e9/34/b9e9341e220d890215ce68d21405f93f.jpg" alt="">
+        <button onclick="goToAddManga()">Add Manga</button>
+        <button onclick="goToHome()">Explore Manga</button>
+    </div>
+
+    <script>
+        function goToGallery() {
+            const username = document.getElementById('username').value.trim();
+            if (!username) {
+                document.getElementById('usernameError').style.display = 'block';
+                return;
+            }
+            document.getElementById('usernameError').style.display = 'none';
+            document.getElementById('entryPage').style.display = 'none';
+            document.getElementById('galleryPage').style.display = 'block';
+            document.getElementById('greeting').innerText = `Hello, ${username}!`;
+        }
+
+        function goToAddManga() {
+            window.location.href = 'AddManga.html';
+        }
+
+        function goToHome() {
+            window.location.href = 'home.html';
+        }
+    </script>
+</body>
+</html>

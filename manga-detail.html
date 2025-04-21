@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VibeInk - Manga</title>
+    <link rel="website icon" type="png" href="./Logo2.png" />
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      /* Timer Styles */
+      .timer-container {
+        margin-left: 120px;
+        padding: 15px;
+        background-color: #f8f8f8;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        color: #000000;
+      }
+
+      .timer-display {
+        font-size: 2.5em;
+        text-align: center;
+        margin: 15px 0;
+        font-family: monospace;
+      }
+
+      .timer-controls {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+      }
+
+      .timer-btn {
+        padding: 8px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        background-color: #efa346;
+        color: rgb(0, 0, 0);
+        transition: background-color 0.3s;
+      }
+
+      .timer-btn:hover {
+        background-color: #fd8d04;
+      }
+
+      .timer-btn:disabled {
+        background-color: #f30a0a;
+        cursor: not-allowed;
+      }
+
+      /* Login link style */
+      .login-link {
+        color: #eaba80;
+        text-decoration: underline;
+      }
+
+      /* Dark mode styles for timer */
+      body.dark-mode .timer-container {
+        background-color: #2c2c2c;
+        color: #ffffff;
+      }
+
+      body.dark-mode .timer-btn {
+        background-color: #4a4a4a;
+        color: #ffffff;
+      }
+
+      body.dark-mode .timer-btn:hover {
+        background-color: #5a5a5a;
+      }
+
+      body.dark-mode .timer-display {
+        color: #ffffff;
+      }
+
+      body.dark-mode .login-link {
+        color: #eaba80;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="header">
+      <div class="logo-container">
+        <img src="./Logo2.png" alt="Logo" class="logo-img" />
+        <div class="name-tagline">
+          <h1
+            class="logo-text"
+            style="
+              font-family: 'Times New Roman', Times, serif;
+              font-size: xx-large;
+            "
+          >
+          VibeInk
+          </h1>
+          <h3>Read It, Feel It, Live It..</h3>
+        </div>
+      </div>
+      <div class="profile-container">
+        <button id="toggle-button" style="margin-left: 20px">
+          <svg
+            id="dark-icon"
+            xmlns="http://www.w3.org/2000/svg"
+            height="24px"
+            viewBox="0 -960 960 960"
+            width="24px"
+          >
+            <path
+              d="M480-280q-83 0-141.5-58.5T280-480q0-83 58.5-141.5T480-680q83 0 141.5 58.5T680-480q0 83-58.5 141.5T480-280ZM200-440H40v-80h160v80Zm720 0H760v-80h160v80ZM440-760v-160h80v160h-80Zm0 720v-160h80v160h-80ZM256-650l-101-97 57-59 96 100-52 56Zm492 496-97-101 53-55 101 97-57 59Zm-98-550 97-101 59 57-100 96-56-52ZM154-212l101-97 55 53-97 101-59-57Z"
+            />
+          </svg>
+          <svg
+            id="light-icon"
+            xmlns="http://www.w3.org/2000/svg"
+            height="24px"
+            viewBox="0 -960 960 960"
+            width="24px"
+            style="display: none"
+          >
+            <path
+              d="M480-120q-150 0-255-105T120-480q0-150 105-255t255-105q14 0 27.5 1t26.5 3q-41 29-65.5 75.5T444-660q0 90 63 153t153 63q55 0 101-24.5t75-65.5q2 13 3 26.5t1 27.5q0 150-105 255T480-120Z"
+            />
+          </svg>
+        </button>
+        <div class="username-display" id="headerUsername">User</div>
+        <img
+          src="./Profile.jpg"
+          alt="Profile"
+          class="profile-img"
+          id="profileImg"
+        />
+        <div class="profile-dropdown" id="profileDropdown">
+          <div class="dropdown-username" id="username">Loading...</div>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-item" id="resetPasswordBtn">Reset Password</div>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-item" id="signoutBtn">Sign Out</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="manga-container" id="manga-container">
+      <div class="loading">Loading manga details...</div>
+    </div>
+
+    <script type="module">
+      import { getMangaById, getCurrentUser } from "./firebase.js";
+
+      async function loadMangaDetails() {
+        // Get manga ID from URL query parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const mangaId = urlParams.get("id");
+
+        if (!mangaId) {
+          showError("Manga ID not found");
+          return;
+        }
+
+        try {
+          const result = await getMangaById(mangaId);
+
+          if (result.success) {
+            displayManga(result.data);
+          } else {
+            showError(result.error);
+          }
+        } catch (error) {
+          console.error("Error loading manga:", error);
+          showError("Failed to load manga details. Please try again later.");
+        }
+      }
+
+      async function displayManga(manga) {
+        console.log("Manga data:", manga); // Log the manga data
+
+        const container = document.getElementById("manga-container");
+
+        container.innerHTML = `
+          <div class="image-section">
+            <h2 class="manga-title">
+              <a href="./home.html" class="back-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-arrow-left-circle" viewBox="0 0 16 16">
+                  <path fill-rule="evenodd" d="M1 8a7 7 0 1 0 14 0A7 7 0 0 0 1 8m15 0A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-4.5-.5a.5.5 0 0 1 0 1H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5z"/>
+                </svg>
+              </a>
+              ${manga.title}
+            </h2>
+            <img src="${manga.imageUrl || "./Manga/placeholder.jpg"}" alt="${manga.title}" class="manga-image" />
+          </div>
+
+          <div class="content-section">
+            <h2>Synopsis</h2>
+            <p>${manga.synopsis || "No synopsis available"}</p>
+
+            <h2>Genres</h2>
+            <ul>
+              ${manga.genres
+                ? manga.genres.map((genre) => `<li>${genre}</li>`).join("")
+                : "<li>No genres specified</li>"}
+            </ul>
+
+            <h2>Chapters</h2>
+            <ul>
+              ${manga.chapters
+                ? manga.chapters
+                    .map(
+                      (chapter, index) =>
+                        `<li>Chapter ${index + 1}: ${chapter.title}</li>`
+                    )
+                    .join("")
+                : "<li>No chapters available</li>"}
+            </ul>
+          </div>
+        `;
+
+        // Update document title
+        document.title = `VibeInk - ${manga.title}`;
+      }
+
+      function showError(message) {
+        const container = document.getElementById("manga-container");
+        container.innerHTML = `
+        <div class="error-message">
+          <h2>Error</h2>
+          <p>${message}</p>
+          <a href="./home.html" class="back-btn">Back to Home</a>
+        </div>
+      `;
+      }
+
+      // Load manga details when the page loads
+      document.addEventListener("DOMContentLoaded", loadMangaDetails);
+    </script>
+
+    <!-- Dark Mode Functionality -->
+    <script>
+      let darkmode = localStorage.getItem("darkmode");
+      const themeSwitch = document.getElementById("toggle-button");
+
+      // Function to enable dark mode
+      const enableDarkmode = () => {
+        document.body.classList.add("dark-mode"); // Add dark mode class
+        localStorage.setItem("darkmode", "active"); // Save preference
+        document.getElementById("light-icon").style.display = "none"; // Hide light icon
+        document.getElementById("dark-icon").style.display = "block"; // Show dark icon
+      };
+
+      // Function to disable dark mode
+      const disableDarkmode = () => {
+        document.body.classList.remove("dark-mode"); // Remove dark mode class
+        localStorage.setItem("darkmode", null); // Clear preference
+        document.getElementById("light-icon").style.display = "block"; // Show light icon
+        document.getElementById("dark-icon").style.display = "none"; // Hide dark icon
+      };
+
+      // Check for saved user preference, if any, on page load
+      if (darkmode === "active") {
+        enableDarkmode(); // Enable dark mode if preference is set
+      } else {
+        disableDarkmode(); // Otherwise, ensure light mode is active
+      }
+
+      // Add event listener for the theme switch button
+      themeSwitch.addEventListener("click", () => {
+        darkmode = localStorage.getItem("darkmode"); // Get current preference
+        darkmode !== "active" ? enableDarkmode() : disableDarkmode(); // Toggle mode
+      });
+    </script>
+  </body>
+</html>

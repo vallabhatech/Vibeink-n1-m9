@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VibeInk - Explore Manga</title>
+    <link rel="website icon" type="png" href="./Logo2.png" />
+    <link rel="stylesheet" href="./homestyle.css" />
+  </head>
+  <body>
+    <header class="header">
+      <div class="logo-container">
+        <img src="./Logo2.png" alt="VibeInk Logo" class="logo-img" />
+        <div class="name-tagline">
+          <h1
+            class="logo-text"
+            style="
+              font-family: 'Times New Roman', Times, serif;
+              font-size: xx-large;
+            "
+          >
+            VibeInk
+          </h1>
+          <h3>Read It, Feel It, Live It..</h3>
+        </div>
+      </div>
+      <div class="profile-container">
+        <button id="toggle-button" style="margin-left: 20px">
+          <svg
+            id="dark-icon"
+            xmlns="http://www.w3.org/2000/svg"
+            height="24px"
+            viewBox="0 -960 960 960"
+            width="24px"
+          >
+            <path
+              d="M480-280q-83 0-141.5-58.5T280-480q0-83 58.5-141.5T480-680q83 0 141.5 58.5T680-480q0 83-58.5 141.5T480-280ZM200-440H40v-80h160v80Zm720 0H760v-80h160v80ZM440-760v-160h80v160h-80Zm0 720v-160h80v160h-80ZM256-650l-101-97 57-59 96 100-52 56Zm492 496-97-101 53-55 101 97-57 59Zm-98-550 97-101 59 57-100 96-56-52ZM154-212l101-97 55 53-97 101-59-57Z"
+            />
+          </svg>
+          <svg
+            id="light-icon"
+            xmlns="http://www.w3.org/2000/svg"
+            height="24px"
+            viewBox="0 -960 960 960"
+            width="24px"
+            style="display: none"
+          >
+            <path
+              d="M480-120q-150 0-255-105T120-480q0-150 105-255t255-105q14 0 27.5 1t26.5 3q-41 29-65.5 75.5T444-660q0 90 63 153t153 63q55 0 101-24.5t75-65.5q2 13 3 26.5t1 27.5q0 150-105 255T480-120Z"
+            />
+          </svg>
+        </button>
+        <div class="username-display" id="headerUsername">User</div>
+        <img
+          src="./Profile.jpg"
+          alt="Profile"
+          class="profile-img"
+          id="profileImg"
+        />
+        <div class="profile-dropdown" id="profileDropdown">
+          <div class="dropdown-username" id="username">Loading...</div>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-item" id="resetPasswordBtn">Reset Password</div>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-item" id="signoutBtn">Sign Out</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="search-container">
+      <div class="search-bar">
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search Manga..."
+          id="searchInput"
+        />
+        <!-- Add Manga Button -->
+        <button id="addMangaButton" class="add-manga-button">
+          Add Manga
+        </button>
+      </div>
+    </div>
+
+    <div class="filter-container">
+      <button class="filter-button active" data-genre="all">All</button>
+      <button class="filter-button" data-genre="fantasy">Fantasy</button>
+      <button class="filter-button" data-genre="romance">Romance</button>
+      <button class="filter-button" data-genre="comedy">Comedy</button>
+      <button class="filter-button" data-genre="action">Action</button>
+      <button class="filter-button" data-genre="drama">Drama</button>
+    </div>
+
+    <div class="grid-container" id="mangaGrid"></div>
+
+    <!-- Load Manga Functionality -->
+    <script type="module">
+      import { getAllManga } from "./firebase.js";
+
+      // Function to load manga from Firebase
+      async function loadManga() {
+        const mangaGrid = document.getElementById("mangaGrid");
+        mangaGrid.innerHTML = ""; // Clear existing content
+
+        // Show loading indicator
+        const loadingDiv = document.createElement("div");
+        loadingDiv.className = "loading";
+        loadingDiv.textContent = "Loading manga...";
+        mangaGrid.appendChild(loadingDiv);
+
+        try {
+          const result = await getAllManga();
+          console.log("Manga Fetched :", result);
+
+          if (result.success) {
+            // Remove loading indicator
+            mangaGrid.removeChild(loadingDiv);
+
+            // Check if we have manga
+            if (result.data.length === 0) {
+              const noManga = document.createElement("div");
+              noManga.className = "no-results";
+              noManga.textContent = "No manga found.";
+              mangaGrid.appendChild(noManga);
+              return;
+            }
+
+            // Add manga cards
+            result.data.forEach((manga) => {
+              const card = document.createElement("div");
+              card.className = "manga-card";
+              card.dataset.genre = manga.genre || "uncategorized";
+
+              card.innerHTML = `
+          <img src="${manga.imageUrl || "./Manga/placeholder.jpg"}" alt="${
+                manga.title
+              }" class="manga-image" />
+          <div class="manga-info">
+            <h2 class="manga-title">${manga.title}</h2>
+            <a href="./manga-detail.html?id=${manga.id}">
+              <button class="view-button">View</button>
+            </a>
+          </div>
+        `;
+
+              mangaGrid.appendChild(card);
+            });
+          } else {
+            throw new Error(result.error);
+          }
+        } catch (error) {
+          console.error("Error loading manga:", error);
+          mangaGrid.innerHTML = `
+      <div class="no-results">
+        Error loading manga. Please try again later.
+      </div>
+    `;
+        }
+      }
+
+      // Load manga when page loads
+      document.addEventListener("DOMContentLoaded", loadManga);
+
+      // Combined filtering function for both search and genres
+      function filterManga() {
+        const searchInput = document.getElementById("searchInput");
+        const searchFilter = searchInput.value.toLowerCase();
+        const grid = document.getElementById("mangaGrid");
+        const cards = grid.getElementsByClassName("manga-card");
+        const activeGenre = document.querySelector(".filter-button.active")
+          .dataset.genre;
+        let resultsFound = false;
+
+        // Remove existing no-results message
+        const existingNoResults = grid.querySelector(".no-results");
+        if (existingNoResults) {
+          existingNoResults.remove();
+        }
+
+        for (let card of cards) {
+          const title = card.getElementsByClassName("manga-title")[0];
+          const genre = card.dataset.genre;
+
+          const matchesSearch = title.textContent
+            .toLowerCase()
+            .includes(searchFilter);
+          const matchesGenre =
+            activeGenre === "all" || genre === activeGenre;
+
+          card.style.display = matchesSearch && matchesGenre ? "" : "none";
+          if (matchesSearch && matchesGenre) resultsFound = true;
+        }
+
+        // Show no results message if no matches found
+        if (!resultsFound && (searchFilter !== "" || activeGenre !== "all")) {
+          const noResults = document.createElement("div");
+          noResults.className = "no-results";
+          noResults.textContent = "No manga found.";
+          grid.appendChild(noResults);
+        }
+      }
+
+      // Add search input event listener
+      document.getElementById("searchInput").addEventListener("keyup", filterManga);
+
+      // Add click handlers for genre filter buttons
+      document.querySelectorAll(".filter-button").forEach((button) => {
+        button.addEventListener("click", () => {
+          // Remove active class from all buttons
+          document.querySelectorAll(".filter-button").forEach((btn) => {
+            btn.classList.remove("active");
+          });
+
+          // Add active class to clicked button
+          button.classList.add("active");
+
+          // Apply filters
+          filterManga();
+        });
+      });
+    </script>
+
+    <!-- Add Manga Button Functionality -->
+    <script type="module">
+      import { getCurrentUser } from "./firebase.js";
+
+      // Add event listener to the "Add Manga" button
+      document.getElementById("addMangaButton").addEventListener("click", async () => {
+        const user = await getCurrentUser();
+        if (user) {
+          // If user is logged in, redirect to AddManga.html
+          window.location.href = "AddManga.html";
+        } else {
+          // If user is not logged in, redirect to login.html
+          alert("You need to log in to add a manga.");
+          window.location.href = "login.html";
+        }
+      });
+    </script>
+
+    <!-- Dark Mode Functionality -->
+    <script>
+      let darkmode = localStorage.getItem("darkmode");
+      const themeSwitch = document.getElementById("toggle-button");
+
+      // Function to enable dark mode
+      const enableDarkmode = () => {
+        document.body.classList.add("dark-mode"); // Add dark mode class
+        localStorage.setItem("darkmode", "active"); // Save preference
+        document.getElementById("light-icon").style.display = "none"; // Hide light icon
+        document.getElementById("dark-icon").style.display = "block"; // Show dark icon
+      };
+
+      // Function to disable dark mode
+      const disableDarkmode = () => {
+        document.body.classList.remove("dark-mode"); // Remove dark mode class
+        localStorage.setItem("darkmode", null); // Clear preference
+        document.getElementById("light-icon").style.display = "block"; // Show light icon
+        document.getElementById("dark-icon").style.display = "none"; // Hide dark icon
+      };
+
+      // Check for saved user preference, if any, on page load
+      if (darkmode === "active") {
+        enableDarkmode(); // Enable dark mode if preference is set
+      } else {
+        disableDarkmode(); // Otherwise, ensure light mode is active
+      }
+
+      // Add event listener for the theme switch button
+      themeSwitch.addEventListener("click", () => {
+        darkmode = localStorage.getItem("darkmode"); // Get current preference
+        darkmode !== "active" ? enableDarkmode() : disableDarkmode(); // Toggle mode
+      });
+    </script>
+  </body>
+</html>
